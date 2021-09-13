@@ -1,0 +1,38 @@
+The Json files here allow for testing configurations of SA and Kangaroo
+without a trace file. The incoming stream is generated from fixed
+size and popularity distributions.
+
+Here are some terms that are different from the paper:
+- Navy = Flash Cache
+- BigHash = SA
+
+The most important things to change based on your setup are:
+
+1. "nvmCachePaths": The location of the block device to run the cache on
+2. "cacheSizeMB": The size of the in-memory cache
+3. "nvmCacheSizeMB": The size of the on-flash cache
+4. "writeAmpDeviceList": Where to read device-level WA if applicable
+
+Currently both configurations create an in-memory file to back
+the flash cache. This means your machine needs at least 9 GB
+of free memory. 
+
+To change the request generation length or number of keys
+
+1. "numOps": number of operations to generate
+2. "numKeys": number of keys in generated requests
+
+"numOps" and "numKeys" are currently set to allow you to test
+the setup works quickly (<10 minutes). To get accurate comparisons, 
+we recommend using a trace. If a trace is not available, 
+"numOps" should be set higher and the combination should
+be tested to ensure the miss ratio is in a reasonable range.
+
+Important Kangaroo parameters
+
+1. "navyKangarooLogThreshold": Kangaroo threshold
+2. "navyKangarooLogSizePct": KLog percent of flash
+3. "navyKangarooLogPhysicalPartitions": number of KLog partitions
+4. "navyKangarooLogIndexPerPhysicalPartitions": number of KLog index tables
+
+More parameters can be found at `cachelib.org` under Cachebench parameters.
