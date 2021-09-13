@@ -16,8 +16,6 @@
 #include "cachelib/navy/kangaroo/LogBucket.h"
 #include "cachelib/navy/kangaroo/KangarooLog.h"
 #include "cachelib/navy/kangaroo/KangarooSizeDistribution.h"
-#include "cachelib/navy/kangaroo/RripBitVector.h"
-#include "cachelib/navy/kangaroo/RripBucket.h"
 #include "cachelib/navy/kangaroo/Types.h"
 
 namespace facebook {
@@ -55,8 +53,6 @@ class Kangaroo final : public Engine {
 
     // Optional bloom filter to reduce IO
     std::unique_ptr<BloomFilter> bloomFilter;
-
-    std::unique_ptr<RripBitVector> rripBitVector;
 
     // Better to underestimate, used for pre-allocating log index
     // only needed for Kangaroo
@@ -114,14 +110,11 @@ class Kangaroo final : public Engine {
   // return the maximum allowed item size
   uint64_t getMaxItemSize() const override;
 
-  uint64_t bfRejectCount() const { return bfRejectCount_.get(); }
+  uint64_t bfRejectCount() const { return 0; }
 
  private:
   struct ValidConfigTag {};
   Kangaroo(Config&& config, ValidConfigTag);
-
-  Buffer readBucket(KangarooBucketId bid);
-  bool writeBucket(KangarooBucketId bid, Buffer buffer);
 
   // The corresponding r/w bucket lock must be held during the entire
   // duration of the read and write operations. For example, during write,
@@ -134,28 +127,6 @@ class Kangaroo final : public Engine {
   folly::SharedMutex& getMutex(KangarooBucketId bid) const {
     return mutex_[bid.index() & (kNumMutexes - 1)];
   }
-
-  KangarooBucketId getKangarooBucketId(HashedKey hk) const {
-    return KangarooBucketId{static_cast<uint32_t>(hk.keyHash() % numBuckets_)};
-  }
-
-  KangarooBucketId getKangarooBucketIdFromHash(uint64_t hash) const {
-    return KangarooBucketId{static_cast<uint32_t>(hash % numBuckets_)};
-  }
-
-  uint64_t getBucketOffset(KangarooBucketId bid) const {
-    return cacheBaseOffset_ + bucketSize_ * bid.index();
-  }
-
-  double bfFalsePositivePct() const;
-  void bfRebuild(KangarooBucketId bid, const RripBucket* bucket);
-  bool bfReject(KangarooBucketId bid, uint64_t keyHash) const;
-
-  bool bvGetHit(KangarooBucketId bid, uint32_t keyIdx) const;
-  void bvSetHit(KangarooBucketId bid, uint32_t keyIdx) const;
-
-  void insertMultipleObjectsToKangarooBucket(std::vector<std::unique_ptr<ObjectInfo>>& ois, 
-      ReadmitCallback readmit);
 
   // Use birthday paradox to estimate number of mutexes given number of parallel
   // queries and desired probability of lock collision.
@@ -171,8 +142,6 @@ class Kangaroo final : public Engine {
   const uint64_t bucketSize_{};
   const uint64_t cacheBaseOffset_{};
   const uint64_t numBuckets_{};
-  std::unique_ptr<BloomFilter> bloomFilter_;
-  std::unique_ptr<RripBitVector> bitVector_;
   std::unique_ptr<KangarooLog> log_{nullptr};
   std::chrono::nanoseconds generationTime_{};
   Device& device_;

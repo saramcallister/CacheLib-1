@@ -132,15 +132,11 @@ uint64_t setupKangaroo(const navy::KangarooConfig& kangarooConfig,
     kangaroo->setBloomFilter(kNumHashes, bitsPerHash);
   }
 
-  if (kangarooConfig.getLogSizePct()) {
-    const uint64_t logSize = alignDown(
-            kangarooCacheSize * kangarooConfig.getLogSizePct() / 100ul, 
-            bucketSize * 64);
-    const uint32_t threshold = kangarooConfig.getLogThreshold();
-    const uint64_t indexPerPhysical = kangarooConfig.getIndexPerPhysicalPartitions();
-    const uint64_t physical = kangarooConfig.getPhysicalPartitions();
-    kangaroo->setLog(logSize, threshold, physical, indexPerPhysical);
-  }
+  const uint64_t logSize = alignDown(kangarooCacheSize, bucketSize * 64);
+  const uint32_t threshold = kangarooConfig.getLogThreshold();
+  const uint64_t indexPerPhysical = kangarooConfig.getIndexPerPhysicalPartitions();
+  const uint64_t physical = kangarooConfig.getPhysicalPartitions();
+  kangaroo->setLog(logSize, threshold, physical, indexPerPhysical);
 
   proto.setKangaroo(std::move(kangaroo), kangarooConfig.getSmallItemMaxSize());
 

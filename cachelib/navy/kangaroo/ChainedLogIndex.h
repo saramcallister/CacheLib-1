@@ -20,38 +20,8 @@ namespace navy {
 // see if items can end up in the same set.
 class ChainedLogIndex  {
  public:
-  // BucketIterator gives hashed key for each valid
-  // element corresponding to a given kangaroo bucket
-  // Read only
-  class BucketIterator {
-   public:
-    BucketIterator() : end_{true} {}
-
-    bool done() const { return end_; }
-
-    uint32_t tag() const { return tag_; }
-
-    uint32_t hits() const { return hits_; }
-
-    PartitionOffset offset() const { return offset_; }
-
-   private:
-    friend ChainedLogIndex;
-
-    BucketIterator(KangarooBucketId id, ChainedLogIndexEntry* firstKey) 
-      : bucket_{id}, tag_{firstKey->tag()}, hits_{firstKey->hits()},
-        offset_{firstKey->offset()}, nextEntry_{firstKey->next_} {}
-
-    KangarooBucketId bucket_{0};
-    uint32_t tag_;
-    uint32_t hits_;
-    PartitionOffset offset_{0, 0};
-    uint16_t nextEntry_;
-    bool end_{false};
-  };
-  
   explicit ChainedLogIndex(uint64_t numHashBuckets, 
-          uint16_t allocationSize, SetNumberCallback setNumberCb);
+          uint16_t allocationSize);
 
   ~ChainedLogIndex();
 
@@ -64,27 +34,12 @@ class ChainedLogIndex  {
 
   // Inserts key into index. 
   Status insert(HashedKey hk, PartitionOffset po, uint8_t hits = 0);
-  Status insert(uint32_t tag, KangarooBucketId bid, PartitionOffset po, uint8_t hits);
 
   // Removes entry's valid bit if it's in the log 
   Status remove(HashedKey hk, PartitionOffset lpid);
-  Status remove(uint64_t tag, KangarooBucketId bid, PartitionOffset lpid);
-
-  // does not create a hit, for log flush lookups
-  PartitionOffset find(KangarooBucketId bid, uint64_t tag);
-
-  // Counts number of items in log corresponding to set 
-  // bucket for the hashed key
-  uint64_t countBucket(HashedKey hk);
-
-  // Get iterator for all items in the same bucket
-  BucketIterator getHashBucketIterator(HashedKey hk);
-  BucketIterator getNext(BucketIterator bi);
 
  private:
 
-  friend BucketIterator;
-  
   class LogIndexBucket {
    public:
     explicit LogIndexBucket(uint32_t idx) : idx_{idx} {}
@@ -107,7 +62,6 @@ class ChainedLogIndex  {
 
   LogIndexBucket getLogIndexBucket(HashedKey hk);
   LogIndexBucket getLogIndexBucket(uint64_t hk);
-  LogIndexBucket getLogIndexBucketFromSetBucket(KangarooBucketId bid);
 
   // locks based on log index hash bucket, concurrent read, single modify
   folly::SharedMutex& getMutex(LogIndexBucket lib) const {
@@ -116,7 +70,6 @@ class ChainedLogIndex  {
 
   const uint64_t numMutexes_{};
   const uint64_t numHashBuckets_{};
-  const SetNumberCallback setNumberCb_{};
   std::unique_ptr<folly::SharedMutex[]> mutexes_;
   std::vector<uint16_t> index_;
 

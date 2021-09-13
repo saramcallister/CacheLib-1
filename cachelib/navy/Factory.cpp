@@ -205,8 +205,9 @@ class KangarooProtoImpl final : public KangarooProto {
     config_.logConfig.threshold = threshold;
     config_.logIndexPartitionsPerPhysical = indexPartitionsPerPhysical;
     config_.logConfig.logPhysicalPartitions = physicalPartitions;
-    config_.logConfig.numTotalIndexBuckets = config_.numBuckets() - 
-        config_.numBuckets() % (indexPartitionsPerPhysical * physicalPartitions);
+    uint64_t indexBuckets = logSize / (4096 * 64);
+    config_.logConfig.numTotalIndexBuckets = indexBuckets - 
+        indexBuckets % (indexPartitionsPerPhysical * physicalPartitions);
   }
 
   void setDevice(Device* device) { config_.device = device; }
@@ -220,11 +221,7 @@ class KangarooProtoImpl final : public KangarooProto {
       if (config_.bucketSize == 0) {
         throw std::invalid_argument{"invalid bucket size"};
       }
-      config_.bloomFilter = std::make_unique<BloomFilter>(
-          config_.numBuckets(), numHashes_, hashTableBitSize_);
     }
-    config_.rripBitVector = std::make_unique<RripBitVector>(
-        config_.numBuckets());
     return std::make_unique<Kangaroo>(std::move(config_));
   }
 

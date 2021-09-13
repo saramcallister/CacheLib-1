@@ -34,15 +34,15 @@ class __attribute__((__packed__)) ChainedLogIndexEntry {
   void invalidate() { valid_ = 0; }
   bool isValid() { return valid_; }
   PartitionOffset offset() { return PartitionOffset(flash_index_, valid_); }
-  uint16_t next() { return next_; }
+  uint16_t next() { return (uint16_t) next_; }
 
  private:
   friend ChainedLogIndex;
 
-  uint32_t flash_index_ : 19;
-  uint32_t tag_ : 9;
-  uint32_t valid_ : 1;
-  uint32_t hits_ : 3;
+  uint64_t flash_index_ : 24;
+  uint64_t tag_ : 20;
+  uint64_t valid_ : 1;
+  uint64_t hits_ : 19;
   uint16_t next_;
 };
 } // namespace navy

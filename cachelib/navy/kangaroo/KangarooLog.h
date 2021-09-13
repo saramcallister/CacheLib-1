@@ -35,11 +35,9 @@ class KangarooLog  {
     uint64_t logIndexPartitions{};
     uint16_t sizeAllocations{1024};
     uint64_t numTotalIndexBuckets{};
-    SetNumberCallback setNumberCallback{};
 
     // for merging to sets
     uint32_t threshold;
-    SetMultiInsertCallback setMultiInsertCallback{};
     uint64_t mergeThreads{32};
 
     Config& validate();
@@ -111,7 +109,7 @@ class KangarooLog  {
     return getLogIndexEntry(hk) % logIndexPartitions_;
   }
   uint64_t getLogIndexEntry(HashedKey hk) const {
-    return setNumberCallback_(hk.keyHash()).index() % numIndexEntries_; 
+    return hk.keyHash() % numIndexEntries_; 
   }
   
   uint64_t getLogPageOffset(LogPageId lpid) const {
@@ -145,12 +143,10 @@ class KangarooLog  {
     return getMutexFromSegment(getSegmentId(lpid));
   }
   
-  double cleaningThreshold_ = .1;
   bool shouldClean(uint64_t nextWriteLog, uint64_t nextCleaningLoc);
   void cleanSegment(LogSegmentId lsid);
   void cleanSegmentsLoop(uint64_t threadId);
   bool shouldWakeCompaction(uint64_t threadId);
-  void moveBucket(HashedKey hk, uint64_t count, LogSegmentId lsidToFlush);
   void readmit(HashedKey hk, BufferView value);
 
   // Use birthday paradox to estimate number of mutexes given number of parallel
@@ -172,7 +168,6 @@ class KangarooLog  {
       new folly::SharedMutex[NumMutexes]};
   const uint64_t logIndexPartitions_{};
   ChainedLogIndex** index_;
-  const SetNumberCallback setNumberCallback_{};
 
   const uint64_t logPhysicalPartitions_{};
   const uint64_t physicalPartitionSize_{};
