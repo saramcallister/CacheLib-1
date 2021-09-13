@@ -11,8 +11,8 @@
     "navyKangarooBucketSize": 4096,
     "navyKangarooLogThreshold": 2,
     "navyKangarooLogPhysicalPartitions": 16,
-    "navyKangarooLogIndexPerPhysicalPartitions": 32,
-    "navyKangarooLogSizePct": 5,
+    "navyKangarooLogIndexPerPhysicalPartitions": 128,
+    "navyKangarooLogSizePct": 100,
     "navySmallItemMaxSize": 2048
   },
   "test_config" : 
